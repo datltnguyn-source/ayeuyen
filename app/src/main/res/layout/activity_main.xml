@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0A0A">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FF AIMBOT  OB55"
+            android:textColor="#FF4444"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Status -->
+        <TextView
+            android:id="@+id/txtStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="READY"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginBottom="14dp"/>
+
+        <!-- FOV preview canvas -->
+        <com.sys.perf.FovPreviewView
+            android:id="@+id/fovPreview"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:background="#181818"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Start capture -->
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="START CAPTURE"
+            android:backgroundTint="#FF4444"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="10dp"/>
+
+        <!-- Aimbot toggle -->
+        <Switch
+            android:id="@+id/switchAimbot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AIMBOT  ON / OFF"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="18dp"/>
+
+        <!-- Sensitivity -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SENSITIVITY"
+            android:textColor="#888888"
+            android:textSize="11sp"/>
+        <SeekBar
+            android:id="@+id/seekSens"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:layout_marginBottom="14dp"/>
+
+        <!-- FOV -->
+        <TextView
+            android:id="@+id/txtFovValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FOV RADIUS: 220 px"
+            android:textColor="#888888"
+            android:textSize="11sp"/>
+        <SeekBar
+            android:id="@+id/seekFov"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="500"
+            android:layout_marginBottom="14dp"/>
+
+        <!-- Prediction -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="PREDICTION LATENCY (ms)"
+            android:textColor="#888888"
+            android:textSize="11sp"/>
+        <SeekBar
+            android:id="@+id/seekPred"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="120"
+            android:layout_marginBottom="14dp"/>
+
+        <!-- Humanize -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="HUMANIZE  (0 = raw   3 = max)"
+            android:textColor="#888888"
+            android:textSize="11sp"/>
+        <SeekBar
+            android:id="@+id/seekHuman"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="3"
+            android:layout_marginBottom="14dp"/>
+
+        <!-- Bone target -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TARGET BONE"
+            android:textColor="#888888"
+            android:textSize="11sp"/>
+        <Spinner
+            android:id="@+id/spinnerBone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#FF4444"
+            android:layout_marginBottom="8dp"/>
+
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,30 @@
+apply plugin: 'com.android.library'
+
+android {
+    namespace   'org.opencv'
+    compileSdk  34
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildTypes {
+        debug   { minifyEnabled false }
+        release { minifyEnabled false }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['native/libs']
+            java.srcDirs    = ['java/src']
+            manifest.srcFile 'java/AndroidManifest.xml'
+        }
+    }
+
+    lint { abortOnError false }
+}

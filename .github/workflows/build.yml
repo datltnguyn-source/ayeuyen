@@ -1,0 +1,140 @@
+name: Build Aimbot APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── 2. JDK 17 ────────────────────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # ── 3. Android SDK ────────────────────────────────────────────────
+      - name: Set up Android SDK & install packages
+        run: |
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          # FIX: accept licenses non-interactively with printf, not yes (some runners block yes)
+          printf 'y\ny\ny\ny\ny\ny\n' | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager --install \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;25.2.9519653"
+          # FIX: correct env var names expected by Gradle NDK auto-detection
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653"         >> $GITHUB_ENV
+
+      # ── 4. Gradle 8.2 ────────────────────────────────────────────────
+      - name: Cache Gradle distribution
+        id: cache-gradle-dist
+        uses: actions/cache@v4
+        with:
+          path: /opt/gradle/gradle-8.2
+          key: gradle-dist-8.2
+
+      - name: Download & install Gradle 8.2
+        if: steps.cache-gradle-dist.outputs.cache-hit != 'true'
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip \
+               -O /tmp/gradle-8.2-bin.zip
+          sudo unzip -q /tmp/gradle-8.2-bin.zip -d /opt/gradle
+
+      - name: Add Gradle to PATH & generate wrapper
+        run: |
+          export PATH="/opt/gradle/gradle-8.2/bin:$PATH"
+          echo "/opt/gradle/gradle-8.2/bin" >> $GITHUB_PATH
+          gradle --version
+          gradle wrapper \
+            --gradle-version 8.2 \
+            --distribution-type bin \
+            --no-daemon
+          chmod +x gradlew
+          # FIX: verify wrapper jar was generated (missing jar = build fails silently)
+          ls -lh gradlew gradle/wrapper/gradle-wrapper.jar gradle/wrapper/gradle-wrapper.properties
+
+      # ── 5. Cache Gradle home ──────────────────────────────────────────
+      - name: Cache Gradle home
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-home-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-home-
+
+      # ── 6. OpenCV 4.9.0 ──────────────────────────────────────────────
+      - name: Cache OpenCV SDK
+        id: cache-opencv
+        uses: actions/cache@v4
+        with:
+          path: opencv-4.9.0-android-sdk.zip
+          key: opencv-4.9.0-android-sdk
+
+      - name: Download OpenCV 4.9.0
+        if: steps.cache-opencv.outputs.cache-hit != 'true'
+        run: |
+          wget -q https://github.com/opencv/opencv/releases/download/4.9.0/opencv-4.9.0-android-sdk.zip
+
+      - name: Unpack OpenCV into project
+        run: |
+          unzip -q opencv-4.9.0-android-sdk.zip
+          # FIX: OpenCV SDK root is OpenCV-android-sdk/sdk (not sdk/sdk)
+          SDK="OpenCV-android-sdk/sdk"
+
+          mkdir -p opencv/native/libs/arm64-v8a
+          mkdir -p opencv/native/libs/armeabi-v7a
+          mkdir -p opencv/java/src
+
+          cp "$SDK/native/libs/arm64-v8a/libopencv_java4.so"   opencv/native/libs/arm64-v8a/
+          cp "$SDK/native/libs/armeabi-v7a/libopencv_java4.so" opencv/native/libs/armeabi-v7a/
+          cp -r "$SDK/java/src/." opencv/java/src/
+          cp "$SDK/java/AndroidManifest.xml"                    opencv/java/AndroidManifest.xml
+
+          echo "=== OpenCV layout ==="
+          ls -lh opencv/native/libs/arm64-v8a/
+          ls -lh opencv/native/libs/armeabi-v7a/
+          find opencv/java/src -name "*.java" | wc -l | xargs echo "Java files:"
+
+      # ── 7. local.properties ──────────────────────────────────────────
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT"                         > local.properties
+          echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/25.2.9519653"       >> local.properties
+
+      # ── 8. Build debug APK ───────────────────────────────────────────
+      - name: Build debug APK
+        run: |
+          ./gradlew :app:assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            --warning-mode all \
+            -Dorg.gradle.jvmargs="-Xmx5g -XX:MaxMetaspaceSize=512m"
+
+      # ── 9. Verify ────────────────────────────────────────────────────
+      - name: Verify APK
+        run: |
+          APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
+          if [ -z "$APK" ]; then echo "APK NOT FOUND"; exit 1; fi
+          echo "APK: $APK  $(du -sh $APK | cut -f1)"
+
+      # ── 10. Upload ───────────────────────────────────────────────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: aimbot-debug-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30

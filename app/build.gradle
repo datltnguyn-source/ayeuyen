@@ -1,0 +1,71 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace   'com.sys.perf'
+    compileSdk  34
+    ndkVersion  "25.2.9519653"
+
+    defaultConfig {
+        applicationId 'com.sys.perf'
+        minSdk        26
+        targetSdk     34
+        versionCode   1
+        versionName   '1.0'
+        ndk { abiFilters "arm64-v8a", "armeabi-v7a" }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+
+    buildTypes {
+        debug {
+            debuggable    true
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled    true
+            shrinkResources  true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    packaging {
+        jniLibs {
+            pickFirsts += [
+                'lib/arm64-v8a/libopencv_java4.so',
+                'lib/armeabi-v7a/libopencv_java4.so',
+                'lib/arm64-v8a/libonnxruntime.so',
+                'lib/armeabi-v7a/libonnxruntime.so'
+            ]
+        }
+    }
+
+    aaptOptions {
+        noCompress "onnx"
+    }
+
+    lint { abortOnError false }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    // FIX: activity-ktx required for registerForActivityResult in AppCompatActivity
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation project(':opencv')
+
+    // ONNX Runtime Android
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.17.3'
+
+    // Shizuku
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
+}
